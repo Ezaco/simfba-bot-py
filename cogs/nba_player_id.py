@@ -21,7 +21,7 @@ class nba_player_id(commands.Cog):
             else:
                 title = f"{data['FirstName']} {data['LastName']} {data['Position']}"
                 desc = f"{data['Year']} year veteran {data['Archetype']} {data['Position']} Graduated from {data['College']}"
-                team_id = id_util.GetNBATeamID(data['TeamAbbr'].upper())
+                team_id = id_util.GetNBATeamID(data['Team'].upper())
                 logo_url = logos_util.GetNBALogo(team_id)
                 embed = discord.Embed(colour=discord.Colour.orange(),
                                 description=desc,
@@ -31,9 +31,9 @@ class nba_player_id(commands.Cog):
                 embed.add_field(name="Overall", value=data['Overall'], inline=True)
                 embed.add_field(name="Experience", value=data['Year'], inline=True)
                 embed.add_field(name="Position", value=data['Position'], inline=True)
-                embed.add_field(name="Inside Shooting", value=data['Finishing'], inline=True)
-                embed.add_field(name="MidRange Shooting", value=data['Shooting2'], inline=True)
-                embed.add_field(name="3pt Shooting", value=data['Shooting3'], inline=True)
+                embed.add_field(name="Inside Shooting", value=data['InsideShooting'], inline=True)
+                embed.add_field(name="MidRange Shooting", value=data['MidRangeShooting'], inline=True)
+                embed.add_field(name="3pt Shooting", value=data['ThreePointShooting'], inline=True)
                 embed.add_field(name="Free Throw", value=data['FreeThrow'], inline=True)
                 embed.add_field(name="Ballwork", value=data['Ballwork'], inline=True)
                 embed.add_field(name="Rebounding", value=data['Rebounding'], inline=True)
@@ -60,7 +60,7 @@ class nba_player_id(commands.Cog):
                 stats = data["SeasonStats"]
                 title = f"{data['FirstName']} {data['LastName']} {data['Position']}"
                 desc = f"{data['Year']} year veteran {data['Archetype']} {data['Position']} Graduated from {data['College']}"
-                team_id = id_util.GetNBATeamID(data['TeamAbbr'].upper())
+                team_id = id_util.GetNBATeamID(data['Team'].upper())
                 logo_url = logos_util.GetNBALogo(team_id)
                 embed = discord.Embed(colour=discord.Colour.orange(),
                                 description=desc,

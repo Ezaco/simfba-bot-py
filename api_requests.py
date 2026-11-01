@@ -158,6 +158,19 @@ def GetBaseballCroot(id, year):
         return res.json()
     return False
 
+def _json_body(res):
+    """The BBA API answers 200 with an empty body when nothing matches."""
+    if res.status_code == 200 and res.content:
+        return res.json() or False
+    return False
+
+def _found_player(res):
+    """The BBA API answers a missing player with a zero-filled record instead of a 404."""
+    data = _json_body(res)
+    if data and data.get("PlayerID"):
+        return data
+    return False
+
 def GetBaseballCrootCommitted(id, year, org=142):
     res = requests.get(f"{bas_url}scouting/player/{id}?league_year_id={year}&org_id={org}")
     if res.status_code == 200:
@@ -172,21 +185,15 @@ def GetCollegeBasketballTeam(id):
 
 def GetCollegeBasketballPlayer(first_name, last_name, id):
     res = requests.get(f"{bba_url}ds/cbb/player/name/{first_name}/{last_name}/{id}")
-    if res.status_code == 200:
-        return res.json()
-    return False
+    return _found_player(res)
 
 def GetCollegeBasketballPlayer_id(id):
     res = requests.get(f"{bba_url}ds/cbb/player/id/{id}")
-    if res.status_code == 200:
-        return res.json()
-    return False
+    return _found_player(res)
 
 def GetNBABasketballPlayer_id(id):
     res = requests.get(f"{bba_url}ds/nba/player/id/{id}")
-    if res.status_code == 200:
-        return res.json()
-    return False
+    return _found_player(res)
 
 def GetNBABasketballTeam(id):
     res = requests.get(f"{bba_url}ds/nba/team/{id}")
@@ -196,9 +203,7 @@ def GetNBABasketballTeam(id):
 
 def GetNBABasketballPlayer(first_name, last_name, id):
     res = requests.get(f"{bba_url}ds/nba/player/name/{first_name}/{last_name}/{id}")
-    if res.status_code == 200:
-        return res.json()
-    return False
+    return _found_player(res)
 
 def CompareTwoNBATeams(t1, t2):
     res = requests.get(f"{bba_url}ds/nba/flex/{t1}/{t2}")
@@ -286,21 +291,15 @@ def GetCollegeFootballCrootingClass(id):
 
 def GetCollegeBasketballCroot(id):
     res = requests.get(f"{bba_url}ds/cbb/croot/{id}")
-    if res.status_code == 200:
-        return res.json()
-    return False
+    return _json_body(res)
 
 def GetCollegeBasketballCrootName(first_name, last_name):
     res = requests.get(f"{bba_url}ds/cbb/croot/name/{first_name}/{last_name}")
-    if res.status_code == 200:
-        return res.json()
-    return False
+    return _json_body(res)
 
 def GetCollegeBasketballCrootingClass(id):
     res = requests.get(f"{bba_url}ds/cbb/croots/class/{id}")
-    if res.status_code == 200:
-        return res.json()
-    return False
+    return _json_body(res)
 
 def GetCollegeFootballConfStandings(id):
     res = requests.get(f"{fba_url}ds/cfb/conference/{id}")

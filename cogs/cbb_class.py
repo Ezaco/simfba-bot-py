@@ -16,7 +16,7 @@ class cbb_class(commands.Cog):
         data = api_requests.GetCollegeBasketballCrootingClass(team_id)
         team = api_requests.GetCollegeBasketballTeam(team_id)
         if data == False:
-            await interaction.response.send_message(f"Could not find team: {input}")
+            await interaction.response.send_message(f"Could not find team: {upper_input}")
         else:
             a = 0
             color = team["TeamData"]

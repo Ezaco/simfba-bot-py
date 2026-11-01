@@ -15,7 +15,7 @@ class cbb_team(commands.Cog):
         logo_url = logos_util.GetCBBLogo(team_id)
         data = api_requests.GetCollegeBasketballTeam(team_id)
         if data == False:
-            await interaction.response.send_message(f"Could not find team: {input}")
+            await interaction.response.send_message(f"Could not find team: {upper_input}")
         else:
             team_data = data["TeamData"]
             team_standings = data["TeamStandings"]

@@ -17,7 +17,7 @@ class nba_team(commands.Cog):
         logo_url = logos_util.GetNBALogo(team_id)
         data = api_requests.GetNBABasketballTeam(team_id)
         if data == False:
-            await interaction.response.send_message(f"Could not find team based on the provided input: {input}")
+            await interaction.response.send_message(f"Could not find team based on the provided input: {team}")
         else:
             team_data = data["TeamData"]
             team_standings = data["TeamStandings"]
