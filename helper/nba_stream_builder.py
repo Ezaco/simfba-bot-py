@@ -20,21 +20,18 @@ async def stream_game(chan, channel: str, week: str, day: str, league: str):
         home_id = game["HomeTeamID"]
         home_rank = game["HomeTeamRank"]
         home_coach = game["HomeTeamCoach"]
-        home_label = game["HomeLabel"]
         home_tag = game["HomeTeamDiscordID"]
         away_id = game["AwayTeamID"]
         away_team = game["AwayTeam"]
         away_tag = game["AwayTeamDiscordID"]
         away_rank = game["AwayTeamRank"]
         away_coach = game["AwayTeamCoach"]
-        away_label = game["AwayLabel"]
         game_label = game["GameLabel"]
         arena = game["Arena"]
         city = game["City"]
         state = game["State"]
         country = game["Country"]
         arena = game["Arena"]
-        attendance = game["Attendance"]
         home_ranked_str = ""
         if home_rank > 0:
             home_ranked_str=f"({home_rank}) "
@@ -42,8 +39,8 @@ async def stream_game(chan, channel: str, week: str, day: str, league: str):
         if away_rank > 0:
             away_ranked_str=f"({away_rank}) "
         contending_teams_str = ""
-        hc_label = home_coach.strip()
-        ac_label = away_coach.strip()
+        hc_label = home_coach.strip() or "AI"
+        ac_label = away_coach.strip() or "AI"
         if home_tag != "":
             hc_label = home_tag
         if away_tag != "":
@@ -55,15 +52,6 @@ async def stream_game(chan, channel: str, week: str, day: str, league: str):
         final_score = ""
         count = 0
         results = []
-        home_offensive_style = ""
-        home_offensive_formation = ""
-        home_defensive_formation = ""
-        home_pace = ""
-        away_offensive_style = ""
-        away_offensive_formation = ""
-        away_defensive_formation = ""
-        away_pace = ""
-        match_name = ""
 
         ### Logos
         home_team_id = home_id
@@ -77,7 +65,7 @@ async def stream_game(chan, channel: str, week: str, day: str, league: str):
         intro_text = util.BKAnnouncerIntroText(announcer, home_team_abbr, away_team_abbr, "nba", arena)
 
         ## Announcer Embed
-        announcer_embed = discord.Embed(colour=discord.Colour.blue(),description=intro_text,title=f"Streaming SimCBB Match!")
+        announcer_embed = discord.Embed(colour=discord.Colour.blue(),description=intro_text,title=f"Streaming SimNBA Match!")
         announcer_embed.add_field(name="Announcer", value=announcer, inline=False)
         announcer_embed.set_thumbnail(url=announcer_url)
         await message_sender.SendEmbedMessage(chan, announcer_embed)
@@ -85,19 +73,8 @@ async def stream_game(chan, channel: str, week: str, day: str, league: str):
         await message_sender.SendMessage(chan, contending_teams_str)
         await asyncio.sleep(5)
         ### Build Initial Embed
-        init_embed = discord.Embed(colour=discord.Colour.orange(),description=contending_teams_str,title="Streaming CBB Match Live on CBS!")
-        if len(match_name) > 0:
-            init_embed.add_field(name="Match Name", value=f"{match_name}", inline=False)
-        init_embed.add_field(name=f"{arena}", value=f"{city}, {state}", inline=False)
-        init_embed.add_field(name=f"Home Coach: {home_coach}", value=f"Pace: {home_pace}", inline=True)
-        init_embed.add_field(name="Home Offensive Style", value=f"{home_offensive_style}", inline=True)
-        init_embed.add_field(name="Home Offensive Formation", value=f"{home_offensive_formation}", inline=True)
-        init_embed.add_field(name="Home Defensive Formation", value=f"{home_defensive_formation}", inline=False)
-        init_embed.add_field(name=f"Away Coach: {away_coach}", value=f"Pace: {away_pace}", inline=True)
-        init_embed.add_field(name="Away Offensive Style", value=f"{away_offensive_style}", inline=True)
-        init_embed.add_field(name="Away Offensive Formation", value=f"{away_offensive_formation}", inline=True)
-        init_embed.add_field(name="Away Defensive Formation", value=f"{away_defensive_formation}", inline=False)
-        init_embed.set_thumbnail(url=home_url)
+        init_title = f"Streaming NBA Match Live on {channel.upper()}!"
+        init_embed = embed_builder.Get_Basketball_Intro_Embed(game, init_title, contending_teams_str, home_url)
         await message_sender.SendEmbedMessage(chan, embed=init_embed)
         await asyncio.sleep(5)
         home_score = 0
