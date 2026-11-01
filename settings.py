@@ -44,3 +44,11 @@ TSN_STREAM_CHANNEL = GetEnvironmentVariable("TSN_STREAM")
 COLLEGE_U_STREAM_CHANNEL = GetEnvironmentVariable("COLLEGE_U_STREAM")
 POLAR_STREAM_CHANNEL = GetEnvironmentVariable("POLAR_SPORTS_NET_STREAM")
 FROZEN_STREAM_CHANNEL = GetEnvironmentVariable("FROZEN_FRENZY_STREAM")
+LAX_STREAM_CHANNEL = int(os.getenv("LAX_STREAM", 0))
+# One channel per SimCLAX network. Any that is unset falls back to LAX_STREAM (the test channel).
+LAX_NETWORK_CHANNELS = {
+    "flo": int(os.getenv("LAX_FLO_STREAM", 0)),
+    "laxtv": int(os.getenv("LAX_LAXTV_STREAM", 0)),
+    "abc": int(os.getenv("LAX_ABC_STREAM", 0)),
+    "espnu": int(os.getenv("LAX_ESPNU_STREAM", 0)),
+}

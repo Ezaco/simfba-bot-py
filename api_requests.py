@@ -1,5 +1,9 @@
+import os
 import requests
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 fba_url = "https://simfba.azurewebsites.net/api/"
 test_url = "http://localhost:5001/api/"
@@ -8,7 +12,121 @@ bba_url = "https://simnba.azurewebsites.net/api/"
 hck_test_url = "http://localhost:8080/api/"
 hck_url = "https://simhck-hqd2bme9gse5d7g9.westus-01.azurewebsites.net/api/"
 bas_url = "https://simbaseball.afwh.app/api/v1/"
+lax_url = os.getenv("SIMLAX_API_URL", "https://3.17.19.90/api/v1").rstrip("/")
+lax_origin = lax_url.removesuffix("/api/v1")
 # bba_url = bba_test_url
+
+def _without_hidden_ratings(data):
+    """College ratings are hidden from users, so only letter grades may reach a Discord message.
+
+    Drops every raw "ratings" block and every numeric "overall" the moment a SimLAX response arrives,
+    so no embed can display them, even by mistake. Letter grades (strings) are kept.
+    """
+    if isinstance(data, dict):
+        return {key: _without_hidden_ratings(value) for key, value in data.items()
+                if key != "ratings" and not (key == "overall" and isinstance(value, (int, float)) and not isinstance(value, bool))}
+    if isinstance(data, list):
+        return [_without_hidden_ratings(item) for item in data]
+    return data
+
+def GetLaxLogoUrl(file_name):
+    if not file_name:
+        return ""
+    return f"{lax_origin}/static/team-logos/{requests.utils.quote(file_name)}"
+
+def GetLaxWeekGames(season=None, week=None):
+    params = {}
+    if season is not None:
+        params["season"] = season
+    if week is not None:
+        params["week"] = week
+    res = requests.get(f"{lax_url}/stream/week", params=params, headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return res.json()
+    return False
+
+def GetLaxTeams():
+    res = requests.get(f"{lax_url}/stream/teams", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return res.json()
+    return False
+
+def GetLaxPlayer(player_id):
+    res = requests.get(f"{lax_url}/stream/players/{player_id}", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return _without_hidden_ratings(res.json())
+    return False
+
+def GetLaxClassRankings(limit=25):
+    res = requests.get(f"{lax_url}/stream/recruiting/rankings", params={"limit": limit}, headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=60)
+    if res.status_code == 200:
+        return res.json()
+    return False
+
+def GetLaxVersus(team_id, other_team_id):
+    res = requests.get(f"{lax_url}/stream/teams/{team_id}/versus/{other_team_id}", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return res.json()
+    return False
+
+def GetLaxCroot(recruit_id):
+    res = requests.get(f"{lax_url}/stream/recruits/{recruit_id}", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return _without_hidden_ratings(res.json())
+    return False
+
+def GetLaxClass(team_id):
+    res = requests.get(f"{lax_url}/stream/teams/{team_id}/class", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return _without_hidden_ratings(res.json())
+    return False
+
+def GetLaxPlayerStats(player_id):
+    res = requests.get(f"{lax_url}/stream/players/{player_id}/stats", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return res.json()
+    return False
+
+def GetLaxPlayerYears(player_ids):
+    """Class year (1 = Fr ... 5 = 5th) for each player id, looked up in parallel. Players that fail to load are left out."""
+    from concurrent.futures import ThreadPoolExecutor
+    ids = list(player_ids)
+    if not ids:
+        return {}
+
+    def lookup(player_id):
+        # A year is a nicety: a timeout or error on one player must never break the team card.
+        try:
+            return GetLaxPlayer(player_id)
+        except Exception as e:
+            print(f"Could not look up the class year for SimLAX player {player_id}: {e}")
+            return False
+
+    with ThreadPoolExecutor(max_workers=min(len(ids), 8)) as pool:
+        results = list(pool.map(lookup, ids))
+    return {player_id: data["player"]["year"] for player_id, data in zip(ids, results) if data}
+
+def GetLaxPlayers(first_name, last_name, team_id):
+    res = requests.get(f"{lax_url}/stream/players", params={"first_name": first_name, "last_name": last_name, "team_id": team_id}, headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return _without_hidden_ratings(res.json())
+    return False
+
+def GetLaxTeamProfile(team_id):
+    res = requests.get(f"{lax_url}/stream/teams/{team_id}", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    if res.status_code == 200:
+        return _without_hidden_ratings(res.json())
+    return False
+
+def RegisterLaxTeam(team_id, discord_mention):
+    res = requests.put(f"{lax_url}/stream/teams/{team_id}/discord", json={"discordMention": discord_mention}, headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=30)
+    return res.status_code == 200
+
+def GetLaxGame(game_id):
+    res = requests.get(f"{lax_url}/stream/games/{game_id}", headers={"X-Bot-Key": os.getenv("SIMLAX_BOT_KEY", "")}, timeout=60)
+    if res.status_code == 200:
+        return res.json()
+    return False
 
 def GetBaseballTeam(team):
     res = requests.get(f"{bas_url}teams/{team}")

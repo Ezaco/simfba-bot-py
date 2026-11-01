@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -5,6 +6,8 @@ import logos_util
 import id_util
 import api_requests
 import settings
+from helper import embed_builder
+from helper.lax_teams import get_lax_teams, find_lax_team, lax_team_choices
 
 class flex(commands.Cog):
     def __init__(self, client: commands.Bot):
@@ -317,6 +320,43 @@ class flex(commands.Cog):
                 embed.add_field(name=f"{t2} Largest Margin of Victory", value=f"{team_two_margin_score}, {team_two_season}", inline=True)
             embed.set_thumbnail(url=latest_win_url)
             await interaction.response.send_message(embed=embed)
+
+
+    @flex_group.command(name="clax", description="Compare the wins between two CLAX programs. Input two {teams}")
+    @app_commands.describe(t1="The first team", t2="The second team")
+    async def clax(self, interaction: discord.Interaction, t1: str, t2: str):
+        try:
+            await interaction.response.defer()
+            teams = await get_lax_teams()
+            if not teams:
+                await interaction.followup.send("I couldn't load the CLAX team list right now. Please try again later.")
+                return
+            team_one = find_lax_team(teams, t1)
+            team_two = find_lax_team(teams, t2)
+            if team_one is None or team_two is None:
+                await interaction.followup.send(f"Could not find team based on the provided teams: {t1} {t2}")
+                return
+            if team_one["id"] == team_two["id"]:
+                await interaction.followup.send("Pick two different teams to compare.")
+                return
+            data = await asyncio.to_thread(api_requests.GetLaxVersus, team_one["id"], team_two["id"])
+            if not data:
+                await interaction.followup.send("Could not load that comparison right now. Please try again later.")
+                return
+            # CFB shows the logo of whoever won last; with no games played, use the first team
+            winner = data["latestWinner"] or team_one
+            logo_url = api_requests.GetLaxLogoUrl(winner["logoFileName"])
+            await interaction.followup.send(embed=embed_builder.Get_LAX_Flex_Embed(data, logo_url))
+        except Exception as e:
+            print(f"Error occured: {e}")
+
+    @clax.autocomplete("t1")
+    async def clax_t1_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await lax_team_choices(current)
+
+    @clax.autocomplete("t2")
+    async def clax_t2_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await lax_team_choices(current)
 
 
 async def setup(client: commands.Bot):

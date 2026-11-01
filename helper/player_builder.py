@@ -459,3 +459,33 @@ def GetPriorityFields(data):
           "inline": True,
         })
     return attrList
+
+
+LAX_ATTRIBUTES = {
+    "Attack": [("Speed", "speed"), ("Shot Power", "shotPower"), ("Shot Accuracy", "shotAccuracy"), ("Passing", "passing"), ("Handling", "handling"), ("Lax IQ", "laxiq")],
+    "Midfield": [("Speed", "speed"), ("Shot Power", "shotPower"), ("Shot Accuracy", "shotAccuracy"), ("Passing", "passing"), ("Handling", "handling"), ("Stick Check", "stickCheck"), ("Body Check", "bodyCheck"), ("Lax IQ", "laxiq")],
+    "Defense": [("Speed", "speed"), ("Body Check", "bodyCheck"), ("Stick Check", "stickCheck"), ("Handling", "handling"), ("Passing", "passing"), ("Lax IQ", "laxiq")],
+    "Goalie": [("Goalie Blocking", "goalieBlocking"), ("Goalie Vision", "goalieVision"), ("Passing", "passing"), ("Lax IQ", "laxiq")],
+    "FOGO": [("Faceoff", "faceoff"), ("Speed", "speed"), ("Body Check", "bodyCheck"), ("Stick Check", "stickCheck"), ("Handling", "handling"), ("Lax IQ", "laxiq")],
+}
+
+def GetLaxPriorityFields(player):
+    grades = player["grades"]
+    position = player["position"]
+    if position == "FOGO" or player["archetype"].upper() == "FOGO":
+        position = "FOGO"
+    attributes = LAX_ATTRIBUTES.get(position, LAX_ATTRIBUTES["Midfield"])
+    attrList = [
+        {"name": "Overall", "value": grades["overall"], "inline": True},
+        {"name": "Potential", "value": grades["potential"], "inline": True},
+        {"name": "​", "value": "​", "inline": True},
+    ]
+    for name, key in attributes:
+        attrList.append({"name": name, "value": grades[key], "inline": True})
+    injury = player["injury"]
+    if injury["isInjured"]:
+        details = injury["name"] or injury["injuryType"] or "Injured"
+        if injury["recoveryWeeks"]:
+            details += f" ({injury['recoveryWeeks']} weeks)"
+        attrList.append({"name": "Injury", "value": details, "inline": False})
+    return attrList
